@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hospital Management System — Demo UI</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa6b2;--accent:#4f46e5;--accent-2:#06b6d4;--glass: rgba(255,255,255,0.03)}
+    *{box-sizing:border-box;font-family:Inter, UI-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071026 0%, #0b1220 100%);color:#e6eef6}
+    .app{display:grid;grid-template-columns:260px 1fr;height:100vh;gap:20px;padding:20px}
+    .sidebar{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .logo{font-weight:700;letter-spacing:0.3px;margin-bottom:14px;font-size:18px}
+    .nav{display:flex;flex-direction:column;gap:8px}
+    .nav button{background:transparent;border:0;color:var(--muted);text-align:left;padding:10px;border-radius:10px;cursor:pointer}
+    .nav button.active{background:linear-gradient(90deg,var(--accent) 0%, var(--accent-2) 100%);color:#fff}
+    .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    header .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    h2{margin:0 0 12px 0}
+    .list{max-height:58vh;overflow:auto;padding-right:8px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);font-size:14px}
+    .btn{background:var(--accent);border:0;color:white;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .form-row{display:flex;gap:8px;margin-bottom:8px}
+    .form-row input,.form-row select{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .muted{color:var(--muted);font-size:13px}
+    .small{font-size:13px}
+    .pill{background:var(--glass);padding:6px 8px;border-radius:999px;color:var(--muted);font-size:13px}
+    .footer-note{color:var(--muted);font-size:13px;margin-top:12px}
+    /* responsive */
+    @media (max-width:900px){.app{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.sidebar{display:flex;flex-direction:row;overflow:auto}}
+
+    /* subtle animations */
+    .fade-in{animation:fadeIn .28s ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    /* little badge */
+    .badge{background:rgba(255,255,255,0.06);padding:6px 10px;border-radius:999px;font-weight:600}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">HMS Demo UI</div>
+      <div class="muted small">A single-file interactive UI for your presentation — no backend required.</div>
+      <nav class="nav" style="margin-top:14px">
+        <button class="active" data-view="dashboard">Dashboard</button>
+        <button data-view="patients">Patient Management</button>
+        <button data-view="doctors">Doctor Management</button>
+        <button data-view="appointments">Appointments</button>
+        <button data-view="billing">Billing</button>
+        <button data-view="about">About / Integration</button>
+      </nav>
+      <div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap">
+        <div class="pill">Demo Mode</div>
+        <div class="pill">Local only</div>
+      </div>
+      <div class="footer-note">Tip: Use the "Export JSON" buttons to copy data, or follow the "About" panel to hook this UI to your Java backend endpoints.</div>
+    </aside>
+
+    <main>
+      <div class="card fade-in">
+        <div class="topbar">
+          <div>
+            <h1 style="margin:0">Hospital Management System — Demo UI</h1>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="small muted">Now: <span id="now"></span></div>
+            <button class="btn" id="exportAll">Export All JSON</button>
+          </div>
+        </div>
+
+        <div class="grid">
+          <section id="mainPanel">
+            <!-- dynamic content injected here -->
+          </section>
+
+          <aside style="min-width:240px">
+            <div class="card small" id="quickStats">
+              <h3 style="margin-top:0">Quick Stats</h3>
+              <div class="muted">Patients <strong id="statPatients">0</strong></div>
+              <div class="muted">Doctors <strong id="statDoctors">0</strong></div>
+              <div class="muted">Appointments <strong id="statAppointments">0</strong></div>
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+              <div class="muted">Selected view: <span id="currentView">Dashboard</span></div>
+              <div style="margin-top:12px;text-align:center">
+                <button class="btn" id="demoFill">Fill sample data</button>
+                <button class="btn ghost" id="clearAll">Clear all</button>
+              </div>
+            </div>
+
+            <div class="card small" style="margin-top:14px">
+              <h3 style="margin-top:0">Quick Actions</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn" id="gotoPatients">Add patient</button>
+                <button class="btn" id="gotoAppt">Schedule appt</button>
+              </div>
+            </div>
+
+          </aside>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // -------------------- In-memory models (mirror your Java classes) --------------------
+    let patients = [];
+    let doctors = [];
+    let appointments = [];
+
+    // id sequences (start similar to your Java project)
+    let patientIdSeq = 1000;
+    let doctorIdSeq = 500;
+    let appointmentIdSeq = 2000;
+
+    // helper to format date
+    const fmt = (dt) => dt.toLocaleString(undefined, {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+    // -------------------- UI boot --------------------
+    const mainPanel = document.getElementById('mainPanel');
+    const nowEl = document.getElementById('now');
+    const currentViewEl = document.getElementById('currentView');
+
+    function updateNow(){ nowEl.textContent = new Date().toLocaleString(); }
+    setInterval(updateNow,1000); updateNow();
+
+    // sidebar navigation
+    document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{
+      document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      showView(b.dataset.view);
+    }));
+
+    // quick actions
+    document.getElementById('demoFill').addEventListener('click',()=>{ seedSampleData(); render(); });
+    document.getElementById('clearAll').addEventListener('click',()=>{ if(confirm('Clear ALL demo data?')){ patients=[];doctors=[];appointments=[]; render(); }});
+    document.getElementById('exportAll').addEventListener('click',()=>{ copyToClipboard(JSON.stringify({patients,doctors,appointments},null,2)); alert('Copied JSON to clipboard'); });
+    document.getElementById('gotoPatients').addEventListener('click',()=>{ document.querySelector('[data-view="patients"]').click(); });
+    document.getElementById('gotoAppt').addEventListener('click',()=>{ document.querySelector('[data-view="appointments"]').click(); });
+
+    // seed
+    function seedSampleData(){
+      doctors = [ {id: nextDoctorId(), name:'Dr. Aisha Khan', specialization:'Cardiology'}, {id: nextDoctorId(), name:'Dr. Rahul Verma', specialization:'Orthopedics'} ];
+      patients = [ {id: nextPatientId(), name:'Ravi Patel', age:35, gender:'M'}, {id: nextPatientId(), name:'Sonia Mehta', age:28, gender:'F'} ];
+      appointments = [];
+      // sample appointment
+      appointments.push({id: nextAppointmentId(), patientId: patients[0].id, doctorId: doctors[0].id, dateTime: new Date(new Date().getTime() + 86400000)});
+    }
+
+    function nextPatientId(){ return patientIdSeq++; }
+    function nextDoctorId(){ return doctorIdSeq++; }
+    function nextAppointmentId(){ return appointmentIdSeq++; }
+
+    // -------------------- Views --------------------
+    function showView(view){
+      currentViewEl.textContent = view.charAt(0).toUpperCase()+view.slice(1);
+      if(view==='dashboard') renderDashboard();
+      else if(view==='patients') renderPatients();
+      else if(view==='doctors') renderDoctors();
+      else if(view==='appointments') renderAppointments();
+      else if(view==='billing') renderBilling();
+      else if(view==='about') renderAbout();
+    }
+
+    function render(){
+      // update stats
+      document.getElementById('statPatients').textContent = patients.length;
+      document.getElementById('statDoctors').textContent = doctors.length;
+      document.getElementById('statAppointments').textContent = appointments.length;
+      // re-render current view
+      const view = currentViewEl.textContent.toLowerCase();
+      showView(view==='dashboard' ? 'dashboard' : view);
+    }
+
+    // Dashboard
+    function renderDashboard(){
+      mainPanel.innerHTML = `
+        <h2>Dashboard</h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div class="card" style="flex:1;min-width:220px">
+            <h3 style="margin-top:0">Overview</h3>
+            <p class="muted">Patients: <strong>${patients.length}</strong></p>
+            <p class="muted">Doctors: <strong>${doctors.length}</strong></p>
+            <p class="muted">Appointments: <strong>${appointments.length}</strong></p>
+          </div>
+          <div class="card" style="flex:1;min-width:320px">
+            <h3 style="margin-top:0">Upcoming Appointments</h3>
+            <div class="list">
+              ${appointments.slice(0,6).map(a=>{
+                const p = patients.find(x=>x.id===a.patientId) || {name:'Unknown'};
+                const d = doctors.find(x=>x.id===a.doctorId) || {name:'Unknown'};
+                return `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03)"><strong>${p.name}</strong> with <em>${d.name}</em> — <div class="small muted">${fmt(new Date(a.dateTime))}</div></div>`;
+              }).join('') || '<div class="muted">No appointments</div>'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Patients view
+    function renderPatients(){
+      mainPanel.innerHTML = `
+        <h2>Patient Management</h2>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="flex:1">
+            <div class="card">
+              <h3 style="margin-top:0">Add / Update Patient</h3>
+              <div class="form-row"><input id="pname" placeholder="Name"></div>
+              <div class="form-row"><input id="page" placeholder="Age" type="number"><select id="pgender"><option value="M">M</option><option value="F">F</option><option value="O">O</option></select></div>
+              <div style="display:flex;gap:8px"><button class="btn" id="addPatientBtn">Add Patient</button><button class="btn ghost" id="exportPatients">Export JSON</button></div>
+              <div id="patientMsg" class="muted small" style="margin-top:8px"></div>
+            </div>
+
+            <div class="card" style="margin-top:12px">
+              <h3 style="margin-top:0">All Patients</h3>
+              <div class="list">
+                <table id="patientsTable"><thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Gender</th><th></th></tr></thead><tbody>
+                ${patients.map(p=>`<tr><td>${p.id}</td><td>${p.name}</td><td>${p.age}</td><td>${p.gender}</td><td><button data-id="${p.id}" class="btn ghost small editP">Edit</button> <button data-id="${p.id}" class="btn ghost small delP">Delete</button></td></tr>`).join('')}
+                </tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('addPatientBtn').addEventListener('click',()=>{
+        const name = document.getElementById('pname').value.trim();
+        const age = parseInt(document.getElementById('page').value) || 0;
+        const gender = document.getElementById('pgender').value;
+        if(!name){ showMsg('patientMsg','Name required'); return; }
+        const p = {id: nextPatientId(), name, age, gender};
+        patients.push(p); showMsg('patientMsg','Added patient ' + p.name); render();
+      });
+
+      document.getElementById('exportPatients').addEventListener('click',()=>{ copyToClipboard(JSON.stringify(patients,null,2)); alert('Patients JSON copied'); });
+
+      document.querySelectorAll('.delP').forEach(b=>b.addEventListener('click',()=>{
+        const id = +b.dataset.id; if(confirm('Delete patient '+id+'?')){ patients = patients.filter(x=>x.id!==id); appointments = appointments.filter(a=>a.patientId!==id); render(); }
+      }));
+
+      document.querySelectorAll('.editP').forEach(b=>b.addEventListener('click',()=>{
+        const id = +b.dataset.id; const p = patients.find(x=>x.id===id);
+        if(!p) return; const newName = prompt('Name', p.name); if(newName!==null) p.name=newName; render();
+      }));
+    }
+
+    // Doctors view
+    function renderDoctors(){
+      mainPanel.innerHTML = `
+        <h2>Doctor Management</h2>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="flex:1">
+            <div class="card">
+              <h3 style="margin-top:0">Add Doctor</h3>
+              <div class="form-row"><input id="dname" placeholder="Name"></div>
+              <div class="form-row"><input id="dspec" placeholder="Specialization"></div>
+              <div style="display:flex;gap:8px"><button class="btn" id="addDoctorBtn">Add Doctor</button><button class="btn ghost" id="exportDoctors">Export JSON</button></div>
+              <div id="doctorMsg" class="muted small" style="margin-top:8px"></div>
+            </div>
+
+            <div class="card" style="margin-top:12px">
+              <h3 style="margin-top:0">All Doctors</h3>
+              <div class="list">
+                <table id="doctorsTable"><thead><tr><th>ID</th><th>Name</th><th>Spec</th><th></th></tr></thead><tbody>
+                ${doctors.map(d=>`<tr><td>${d.id}</td><td>${d.name}</td><td>${d.specialization}</td><td><button data-id="${d.id}" class="btn ghost small delD">Delete</button></td></tr>`).join('')}
+                </tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('addDoctorBtn').addEventListener('click',()=>{
+        const name = document.getElementById('dname').value.trim();
+        const spec = document.getElementById('dspec').value.trim();
+        if(!name||!spec){ showMsg('doctorMsg','Name and specialization required'); return; }
+        const d = {id: nextDoctorId(), name, specialization:spec}; doctors.push(d); showMsg('doctorMsg','Added ' + name); render();
+      });
+
+      document.getElementById('exportDoctors').addEventListener('click',()=>{ copyToClipboard(JSON.stringify(doctors,null,2)); alert('Doctors JSON copied'); });
+      document.querySelectorAll('.delD').forEach(b=>b.addEventListener('click',()=>{ const id=+b.dataset.id; if(confirm('Delete doctor '+id+'?')){ doctors=doctors.filter(x=>x.id!==id); appointments=appointments.filter(a=>a.doctorId!==id); render(); }}));
+    }
+
+    // Appointments view
+    function renderAppointments(){
+      mainPanel.innerHTML = `
+        <h2>Appointment Management</h2>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="flex:1">
+            <div class="card">
+              <h3 style="margin-top:0">Schedule Appointment</h3>
+              <div class="form-row">
+                <select id="selPatient">${patients.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('')}
+                </select>
+                <select id="selDoctor">${doctors.map(d=>`<option value="${d.id}">${d.id} — ${d.name} (${d.specialization})</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-row"><input id="aptdt" type="datetime-local"></div>
+              <div style="display:flex;gap:8px"><button class="btn" id="addApptBtn">Schedule</button><button class="btn ghost" id="exportAppts">Export JSON</button></div>
+              <div id="apptMsg" class="muted small" style="margin-top:8px"></div>
+            </div>
+
+            <div class="card" style="margin-top:12px">
+              <h3 style="margin-top:0">All Appointments</h3>
+              <div class="list">
+                <table><thead><tr><th>ID</th><th>Patient</th><th>Doctor</th><th>When</th><th></th></tr></thead><tbody>
+                ${appointments.map(a=>{const p=patients.find(x=>x.id===a.patientId)||{name:'Unknown'};const d=doctors.find(x=>x.id===a.doctorId)||{name:'Unknown'};return `<tr><td>${a.id}</td><td>${p.name}</td><td>${d.name}</td><td>${fmt(new Date(a.dateTime))}</td><td><button data-id="${a.id}" class="btn ghost small delA">Cancel</button></td></tr>`}).join('')}
+                </tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('addApptBtn').addEventListener('click',()=>{
+        const pid = +document.getElementById('selPatient').value;
+        const did = +document.getElementById('selDoctor').value;
+        const dtv = document.getElementById('aptdt').value;
+        if(!pid||!did||!dtv){ showMsg('apptMsg','Please choose patient, doctor and date/time'); return; }
+        const dt = new Date(dtv);
+        if(isNaN(dt)) { showMsg('apptMsg','Invalid date/time'); return; }
+        const a = {id: nextAppointmentId(), patientId:pid, doctorId:did, dateTime:dt};
+        appointments.push(a); showMsg('apptMsg','Scheduled appointment'); render();
+      });
+
+      document.getElementById('exportAppts').addEventListener('click',()=>{ copyToClipboard(JSON.stringify(appointments,null,2)); alert('Appointments JSON copied'); });
+      document.querySelectorAll('.delA').forEach(b=>b.addEventListener('click',()=>{ const id=+b.dataset.id; if(confirm('Cancel appointment '+id+'?')){ appointments=appointments.filter(x=>x.id!==id); render(); }}));
+    }
+
+    // Billing view
+    function renderBilling(){
+      mainPanel.innerHTML = `
+        <h2>Billing (Demo)</h2>
+        <div class="card">
+          <h3 style="margin-top:0">Generate Bill for Appointment</h3>
+          <div class="form-row"><select id="billAppt">${appointments.map(a=>{const p=patients.find(x=>x.id===a.patientId)||{name:'Unknown'};return `<option value="${a.id}">${a.id} — ${p.name} on ${fmt(new Date(a.dateTime))}</option>`}).join('')}</select></div>
+          <div style="display:flex;gap:8px"><button class="btn" id="genBillBtn">Generate</button></div>
+          <div id="billOutput" style="margin-top:12px"></div>
+        </div>
+      `;
+
+      document.getElementById('genBillBtn').addEventListener('click',()=>{
+        const aid = +document.getElementById('billAppt').value; const a = appointments.find(x=>x.id===aid);
+        if(!a){ document.getElementById('billOutput').innerHTML = '<div class="muted">No appointment selected</div>'; return; }
+        const p = patients.find(x=>x.id===a.patientId) || {name:'Unknown'}; const d = doctors.find(x=>x.id===a.doctorId) || {name:'Unknown', specialization:''};
+        const base = 500; let surcharge = 100; const spec = (d.specialization||'').toLowerCase(); if(spec.includes('cardio')) surcharge=700; else if(spec.includes('ortho')) surcharge=300;
+        const total = base + surcharge;
+        document.getElementById('billOutput').innerHTML = `\n          <div class="card small">\n            <div><strong>Appointment:</strong> ${a.id}</div>\n            <div><strong>Patient:</strong> ${p.name}</div>\n            <div><strong>Doctor:</strong> ${d.name} (${d.specialization})</div>\n            <div class="muted">Base fee: INR ${base}</div>\n            <div class="muted">Surcharge: INR ${surcharge}</div>\n            <h3>Amount due: INR ${total.toFixed(2)}</h3>\n          </div>`;
+      });
+    }
+
+    function renderAbout(){
+      mainPanel.innerHTML = `
+        <h2>About / Integration</h2>
+        <div class="card">
+          <h3 style="margin-top:0">How to connect this UI to your Java backend</h3>
+          <ol class="muted small">
+            <li>Expose REST endpoints from your Java application (e.g. Spring Boot) like <code>/api/patients</code>, <code>/api/doctors</code>, <code>/api/appointments</code>.</li>
+            <li>Replace the in-memory arrays and button handlers in this file with fetch()/axios calls to your endpoints. Example: <code>fetch('/api/patients').then(r=>r.json()).then(data=>patients=data)</code>.</li>
+            <li>For demo/presentation, keep this file local — it demonstrates all flows without a server.</li>
+          </ol>
+          <div class="muted small">Notes: This single-file UI is intentionally simple and portable for a live demo. If you want, I can produce a React version that talks to your backend (make sure to run web server on localhost and handle CORS).</div>
+        </div>
+      `;
+    }
+
+    // -------------------- Utilities --------------------
+    function showMsg(id,msg){ const el = document.getElementById(id); if(!el) return; el.textContent = msg; setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; },3000); }
+    function copyToClipboard(text){ navigator.clipboard && navigator.clipboard.writeText(text).catch(()=>{}); }
+
+    // initial state
+    seedSampleData(); showView('dashboard'); render();
+  </script>
+</body>
+</html>
